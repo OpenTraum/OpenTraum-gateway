@@ -17,6 +17,12 @@ ext {
     set('springCloudVersion', '2025.0.0')
 }
 
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
 repositories {
     mavenCentral()
 }
@@ -30,6 +36,18 @@ dependencyManagement {
 dependencies {
     // Spring Cloud Gateway (reactive, WebFlux-based)
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+
+    // Redis Reactive (JWT 블랙리스트 확인)
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+
+    // JWT (토큰 검증)
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 
     // Actuator + Prometheus
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
