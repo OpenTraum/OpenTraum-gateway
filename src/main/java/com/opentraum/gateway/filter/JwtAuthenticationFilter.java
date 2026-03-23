@@ -38,6 +38,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private static final AntPathMatcher pathMatcher = new AntPathMatcher();
 
+    // ORGANIZER 역할 필수 경로
+    private static final List<String> ORGANIZER_ONLY_PATTERNS = List.of(
+            "/api/v1/admin/**"
+    );
+
     // 인증 불필요 경로 (method + pattern)
     private static final List<PublicEndpoint> PUBLIC_ENDPOINTS = List.of(
             new PublicEndpoint(null, "/api/v1/auth/**"),
@@ -102,16 +107,28 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private Mono<Void> injectUserHeaders(ServerWebExchange exchange, GatewayFilterChain chain, String token) {
         Long userId = jwtProvider.getUserId(token);
         String role = jwtProvider.getRole(token);
+        String path = exchange.getRequest().getURI().getPath();
+
+        // admin 경로 역할 검증
+        if (isOrganizerOnly(path) && !"ORGANIZER".equals(role)) {
+            log.debug("권한 부족: userId={}, role={}, path={}", userId, role, path);
+            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+            return exchange.getResponse().setComplete();
+        }
 
         ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                 .header("X-User-Id", userId.toString())
-                .header("X-User-Role", role != null ? role : "USER")
+                .header("X-User-Role", role != null ? role : "CONSUMER")
                 .build();
 
-        log.debug("JWT 인증 완료: userId={}, role={}, path={}",
-                userId, role, exchange.getRequest().getURI().getPath());
+        log.debug("JWT 인증 완료: userId={}, role={}, path={}", userId, role, path);
 
         return chain.filter(exchange.mutate().request(mutatedRequest).build());
+    }
+
+    private boolean isOrganizerOnly(String path) {
+        return ORGANIZER_ONLY_PATTERNS.stream()
+                .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
     private boolean isPublicEndpoint(ServerHttpRequest request) {
