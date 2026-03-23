@@ -57,4 +57,8 @@ public class JwtProvider {
     public String getRole(String token) {
         return getClaims(token).get("role", String.class);
     }
+
+    public String getTenantId(String token) {
+        return getClaims(token).get("tenantId", String.class);
+    }
 }

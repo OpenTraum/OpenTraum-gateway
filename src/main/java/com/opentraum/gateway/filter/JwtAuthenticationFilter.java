@@ -107,6 +107,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private Mono<Void> injectUserHeaders(ServerWebExchange exchange, GatewayFilterChain chain, String token) {
         Long userId = jwtProvider.getUserId(token);
         String role = jwtProvider.getRole(token);
+        String tenantId = jwtProvider.getTenantId(token);
         String path = exchange.getRequest().getURI().getPath();
 
         // admin 경로 역할 검증
@@ -116,12 +117,17 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             return exchange.getResponse().setComplete();
         }
 
-        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+        var requestBuilder = exchange.getRequest().mutate()
                 .header("X-User-Id", userId.toString())
-                .header("X-User-Role", role != null ? role : "CONSUMER")
-                .build();
+                .header("X-User-Role", role != null ? role : "CONSUMER");
 
-        log.debug("JWT 인증 완료: userId={}, role={}, path={}", userId, role, path);
+        if (tenantId != null) {
+            requestBuilder.header("X-Tenant-Id", tenantId);
+        }
+
+        ServerHttpRequest mutatedRequest = requestBuilder.build();
+
+        log.debug("JWT 인증 완료: userId={}, role={}, tenantId={}, path={}", userId, role, tenantId, path);
 
         return chain.filter(exchange.mutate().request(mutatedRequest).build());
     }
