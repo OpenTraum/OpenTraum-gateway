@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: gateway
 spec:
   revisionHistoryLimit: 2
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: gateway
@@ -20,6 +20,7 @@ spec:
         app.kubernetes.io/part-of: opentraum
         app.kubernetes.io/component: gateway
     spec:
+      terminationGracePeriodSeconds: 10
       imagePullSecrets:
         - name: harbor-secret
       containers:
@@ -38,20 +39,26 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "500m"
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            timeoutSeconds: 3
+            failureThreshold: 20
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8080
-            initialDelaySeconds: 60
-            periodSeconds: 15
-            timeoutSeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
       restartPolicy: Always
