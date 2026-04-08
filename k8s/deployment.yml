@@ -25,7 +25,7 @@ spec:
         - name: harbor-secret
       containers:
         - name: gateway
-          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-gateway:b62e9b0543eae38b4a3c1279994d38980368a64e
+          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-gateway:d702e9fa734a14df20d77bc7c297001a069d121b
           ports:
             - containerPort: 8080
               protocol: TCP
