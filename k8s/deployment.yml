@@ -8,7 +8,8 @@ metadata:
     app.kubernetes.io/part-of: opentraum
     app.kubernetes.io/component: gateway
 spec:
-  replicas: 1
+  revisionHistoryLimit: 2
+  replicas: 2
   selector:
     matchLabels:
       app: gateway
@@ -19,38 +20,50 @@ spec:
         app.kubernetes.io/part-of: opentraum
         app.kubernetes.io/component: gateway
     spec:
+      terminationGracePeriodSeconds: 10
       imagePullSecrets:
         - name: harbor-secret
       containers:
         - name: gateway
-          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-gateway:80bc0c769c640dac79fdf2a5be0c59e3fd99c8d4
+          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-gateway:3b3345654503ad0dd14633f4c0ccec3ebb2fa428
           ports:
             - containerPort: 8080
               protocol: TCP
           envFrom:
             - configMapRef:
                 name: opentraum-config
+          env:
+            - name: JAVA_OPTS
+              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1"
+            - name: SPRING_MAIN_LAZY_INITIALIZATION
+              value: "true"
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "250m"
-            limits:
               memory: "256Mi"
               cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            timeoutSeconds: 3
+            failureThreshold: 20
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8080
-            initialDelaySeconds: 60
-            periodSeconds: 15
-            timeoutSeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
       restartPolicy: Always
