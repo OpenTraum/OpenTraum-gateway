@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: opentraum
+  labels:
+    app: gateway
+    app.kubernetes.io/part-of: opentraum
+    app.kubernetes.io/component: gateway
+spec:
+  revisionHistoryLimit: 2
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+        app.kubernetes.io/part-of: opentraum
+        app.kubernetes.io/component: gateway
+    spec:
+      terminationGracePeriodSeconds: 10
+      imagePullSecrets:
+        - name: harbor-secret
+      containers:
+        - name: gateway
+          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-gateway:80c3c96da9cd683c47a1d72436cdc8ec11b1478e
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: opentraum-config
+          env:
+            - name: JAVA_OPTS
+              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1"
+            - name: SPRING_MAIN_LAZY_INITIALIZATION
+              value: "true"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            timeoutSeconds: 3
+            failureThreshold: 20
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+      restartPolicy: Always
