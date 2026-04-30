@@ -36,11 +36,9 @@ spec:
           labelSelector:
             matchLabels:
               app: gateway
-      imagePullSecrets:
-        - name: harbor-secret
       containers:
         - name: gateway
-          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-gateway:3ce80551cc108306977177179ed65cb66c34ea50
+          image: 881490135253.dkr.ecr.ap-northeast-2.amazonaws.com/skala3-cloud1-team8-opentraum-gateway:3ce80551cc108306977177179ed65cb66c34ea50
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
