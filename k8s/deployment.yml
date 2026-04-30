@@ -38,7 +38,7 @@ spec:
               app: gateway
       containers:
         - name: gateway
-          image: 881490135253.dkr.ecr.ap-northeast-2.amazonaws.com/skala3-cloud1-team8-opentraum-gateway:4b776429115c800218b93f7b9c6ede5f5fb63ec1
+          image: 881490135253.dkr.ecr.ap-northeast-2.amazonaws.com/skala3-cloud1-team8-opentraum-gateway:5d6c09a0118531ad737b0fd439c49fe9f2b7fb6e
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
